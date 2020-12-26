@@ -4,4 +4,4 @@
 2. StepsWithPump
 ## Instructions:
 1. Extract the wanted folder to ../craftbeerpi/plugins
-2. Reboot the computer.
+2. Restart craftbeerpi.
