@@ -39,7 +39,7 @@ class PumpMash(StepBase):
     timer = Property.Number("Timer in Minutes", configurable=True,
                             description="Timer is started when the target temperature is reached")
     # the diff in celsius degrees from mash temp to desired strike temp
-    overshoot = Property.Number("Overshoot Temperature Difference", configurable=True, default_value=2,
+    overshoot = Property.Number("Overshoot Temperature Difference", configurable=True, default_value=1,
                                 description="The difference between the initial heating temp and the mash temp."
                                             "Reset doesn't use overshoot")
     pump_work_time = Property.Number("Mash pump work time", True, 600,
@@ -111,6 +111,7 @@ class PumpMash(StepBase):
                 self.start_timer(int(self.timer) * 60)
                 # sets target temp to mash temp
                 self.set_target_temp(self.temp, self.kettle)
+                self.notify("Mash Temp Reached!", "Insert Grain", timeout=None)
         # Check if timer finished and go to next step
         if self.is_timer_finished():
             self.actor_off(int(self.pump))  # turns pump off
