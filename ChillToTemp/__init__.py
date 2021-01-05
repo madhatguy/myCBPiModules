@@ -37,7 +37,8 @@ class ChillerToTemp(StepBase):
     # Properties
     temp = Property.Number("Desired Temperature", configurable=True)
     kettle = StepProperty.Kettle("Kettle")
-    pump = StepProperty.Actor("Chiller Pump")
+    prime_pump = StepProperty.Actor("Chiller Primary Pump")
+    sec_pump = StepProperty.Actor("Secondary Pump")
     timer = Property.Number("Upper Bound in Minutes", description="The time after which this step will conclude,"
                                                                   " regardless of the current temp", configurable=True)
     # num of times to check target temp has been reached (in order to rule out bad readings)
@@ -54,7 +55,9 @@ class ChillerToTemp(StepBase):
         self.set_target_temp(self.temp, self.kettle)
         self.start_timer(int(self.timer) * 60)
         # turns pump on
-        self.actor_on(int(self.pump))
+        if self.sec_pump is not None:
+            self.actor_on(int(self.sec_pump))
+        self.actor_on(int(self.prime_pump))
 
     @cbpi.action("Start Timer Now")
     def start(self):
@@ -74,7 +77,9 @@ class ChillerToTemp(StepBase):
     def finish(self):
         self.set_target_temp(0, self.kettle)
         # turns pump off at finish
-        self.actor_off(int(self.pump))
+        self.actor_off(int(self.prime_pump))
+        if self.sec_pump is not None:
+            self.actor_off(int(self.sec_pump))
 
     def execute(self):
         '''
@@ -89,7 +94,9 @@ class ChillerToTemp(StepBase):
             if self.sample_streak == self.Samples:
                 self.notify("Yeast Pitch Temp Reached!", "Move to fermentation tank", timeout=None)
                 # turns pump off at finish
-                self.actor_off(int(self.pump))
+                self.actor_off(int(self.prime_pump))
+                if self.sec_pump is not None:
+                    self.actor_off(int(self.sec_pump))
                 self.next()
         else:
             # Nullifies The samples streak
@@ -98,5 +105,7 @@ class ChillerToTemp(StepBase):
         if self.is_timer_finished():
             self.notify("Step Temp Wasn't Reached!", "Good luck:(", timeout=None)
             # turns pump off at finish
-            self.actor_off(int(self.pump))
+            self.actor_off(int(self.prime_pump))
+            if self.sec_pump is not None:
+                self.actor_off(int(self.sec_pump))
             self.next()
